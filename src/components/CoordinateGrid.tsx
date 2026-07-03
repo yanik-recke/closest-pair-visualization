@@ -37,9 +37,25 @@ export function CoordinateGrid({
   const innerHeight = Math.max(0, height - MARGIN.top - MARGIN.bottom)
 
   // The "projection": data units -> pixels within the plotting area.
+  // Keep the aspect ratio 1:1 so distances read truthfully: use a single
+  // pixels-per-unit for both axes, then expand the domains to fill the panel
+  // (centered on the requested domains). The requested range stays fully
+  // visible; the longer pixel axis just shows a bit more.
+  const xCenter = (xDomain[0] + xDomain[1]) / 2
+  const yCenter = (yDomain[0] + yDomain[1]) / 2
+  const xSpan = xDomain[1] - xDomain[0]
+  const ySpan = yDomain[1] - yDomain[0]
+  const pxPerUnit = Math.min(innerWidth / xSpan, innerHeight / ySpan)
+  const xHalf = innerWidth / pxPerUnit / 2
+  const yHalf = innerHeight / pxPerUnit / 2
+
   // y is inverted because SVG's y grows downward but math grows upward.
-  const xScale = scaleLinear().domain(xDomain).range([0, innerWidth])
-  const yScale = scaleLinear().domain(yDomain).range([innerHeight, 0])
+  const xScale = scaleLinear()
+    .domain([xCenter - xHalf, xCenter + xHalf])
+    .range([0, innerWidth])
+  const yScale = scaleLinear()
+    .domain([yCenter - yHalf, yCenter + yHalf])
+    .range([innerHeight, 0])
 
   const xTicks = xScale.ticks(10)
   const yTicks = yScale.ticks(10)

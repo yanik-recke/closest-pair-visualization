@@ -65,6 +65,14 @@ body {
   min-height: 0;
 }
 
+.grid-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
 .canvas-panel {
   flex: 1;
   background: var(--panel);
@@ -79,6 +87,190 @@ body {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* --- controls sidebar --- */
+.controls-panel {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.add-point-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+.add-point-fields {
+  display: flex;
+  gap: 0.5rem;
+}
+.add-point-fields label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.add-point-fields input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--bg);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.add-point-fields input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.add-point-form button {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+.add-point-form button:hover {
+  border-color: var(--accent);
+}
+.add-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--intersection);
+}
+
+.controls-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.controls-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.controls-row button {
+  flex: 1;
+}
+
+.controls-buttons button {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: var(--accent);
+  color: #06121a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.12s ease, opacity 0.12s ease;
+}
+.controls-buttons button:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.controls-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.controls-buttons button.secondary {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--ink-dim);
+}
+
+.status {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.15rem 0;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.status dt {
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.5rem;
+}
+.status dt:first-child {
+  margin-top: 0;
+}
+.status dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.5rem;
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.legend .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+/* swatches reuse the point-role fills */
+.legend .point--current {
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.legend .point--active {
+  background: var(--segment);
+}
+.legend .point--candidate {
+  background: var(--accent);
+}
+.legend .point--compare {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1.5px #fff;
+}
+.legend .point--best {
+  background: var(--intersection);
 }
 
 /* --- grid --- */
@@ -121,6 +313,55 @@ body {
   r: 6;
 }
 
+/* --- sweep points (closest-pair) --- */
+.point {
+  fill: var(--ink-dim);
+  cursor: pointer;
+  transition: fill 0.12s ease;
+}
+.point:hover {
+  fill: var(--accent);
+}
+.point--active {
+  fill: var(--segment);
+}
+.point--candidate {
+  fill: var(--accent);
+}
+.point--compare {
+  fill: var(--accent);
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.point--best {
+  fill: var(--intersection);
+}
+.point--current {
+  fill: #ffffff;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+/* --- sweep overlays --- */
+.search-box {
+  fill: rgba(76, 196, 255, 0.08);
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.best-pair-line {
+  stroke: var(--intersection);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.compare-line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  stroke-linecap: round;
+}
+
+
 /* --- tooltip --- */
 .point-tooltip__box {
   fill: #0b0f14;
@@ -142,3 +383,4 @@ body {
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
 }
+
