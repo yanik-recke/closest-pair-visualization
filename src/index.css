@@ -113,6 +113,24 @@ body {
 }
 .segment-endpoint {
   fill: var(--segment);
+  cursor: pointer;
+  transition: r 0.1s ease, fill 0.1s ease;
+}
+.segment-endpoint:hover {
+  fill: var(--accent);
+  r: 6;
+}
+
+/* --- tooltip --- */
+.point-tooltip__box {
+  fill: #0b0f14;
+  stroke: var(--panel-border);
+  stroke-width: 1;
+}
+.point-tooltip__text {
+  fill: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 .intersection {
   fill: var(--intersection);

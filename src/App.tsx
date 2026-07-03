@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { CoordinateGrid } from './components/CoordinateGrid'
+import { PointTooltip } from './components/PointTooltip'
 import { useElementSize } from './hooks/useElementSize'
-import type { Segment } from './geometry/types'
+import type { Point, Segment } from './geometry/types'
 
 // A few demo segments so the grid isn't empty. These will later come from
 // user input / the plane-sweep event queue.
@@ -12,6 +14,7 @@ const DEMO_SEGMENTS: Segment[] = [
 
 export default function App() {
   const { ref, width, height } = useElementSize<HTMLDivElement>()
+  const [hovered, setHovered] = useState<Point | null>(null)
 
   return (
     <>
@@ -37,20 +40,29 @@ export default function App() {
                         x2={xScale(s.p2.x)}
                         y2={yScale(s.p2.y)}
                       />
-                      <circle
-                        className="segment-endpoint"
-                        cx={xScale(s.p1.x)}
-                        cy={yScale(s.p1.y)}
-                        r={3}
-                      />
-                      <circle
-                        className="segment-endpoint"
-                        cx={xScale(s.p2.x)}
-                        cy={yScale(s.p2.y)}
-                        r={3}
-                      />
+                      {[s.p1, s.p2].map((p, i) => (
+                        <circle
+                          key={i}
+                          className="segment-endpoint"
+                          cx={xScale(p.x)}
+                          cy={yScale(p.y)}
+                          r={4}
+                          onMouseEnter={() => setHovered(p)}
+                          onMouseLeave={() =>
+                            setHovered((cur) => (cur === p ? null : cur))
+                          }
+                        />
+                      ))}
                     </g>
                   ))}
+
+                  {hovered && (
+                    <PointTooltip
+                      point={hovered}
+                      px={xScale(hovered.x)}
+                      py={yScale(hovered.y)}
+                    />
+                  )}
                 </g>
               )}
             </CoordinateGrid>
