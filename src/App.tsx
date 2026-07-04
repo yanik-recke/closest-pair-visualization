@@ -28,6 +28,18 @@ const INITIAL_POINTS: GridPoint[] = [
   { x: 11, y: 6 },
 ].map((p) => ({ ...p, id: uid() }));
 
+const PHASE_HELP: Record<SweepState["phase"], string> = {
+  advance:
+    "The sweep line moves right to the next point (points are processed in order of increasing x).",
+  evict:
+    "Removes points that are now more than the best distance behind the sweep line — too far left to beat the current pair.",
+  query:
+    "Collects the active points within the best distance in y of the current point: the only candidates worth measuring.",
+  compare:
+    "Measures the distance from the current point to a candidate and keeps it as the new best pair if it is closer.",
+  done: "The sweep is finished — the closest pair and its distance are final.",
+};
+
 function pointClass(
   p: Point,
   s: SweepState | null,
@@ -172,6 +184,10 @@ export default function App() {
   };
 
   const bestPair = state?.best.pair ?? null;
+
+  const phaseHelp = state
+    ? PHASE_HELP[state.phase]
+    : "Which stage of the sweep this step is in: advance, evict, query, compare, or done.";
 
   return (
     <>
@@ -340,7 +356,12 @@ export default function App() {
             <dd>{points.length}</dd>
             <dt>Progress</dt>
             <dd>{`${cursor + 1} / ${steps.length}`}</dd>
-            <dt>Phase</dt>
+            <dt className="phase-label" tabIndex={0}>
+              Phase
+              <span className="phase-tip" role="tooltip">
+                {phaseHelp}
+              </span>
+            </dt>
             <dd>{state?.phase ?? "—"}</dd>
             <dt>Step</dt>
             <dd>{state?.message ?? "Press Step to begin"}</dd>
