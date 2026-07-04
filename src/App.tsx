@@ -31,9 +31,6 @@ const INITIAL_POINTS: GridPoint[] = [
   { x: 8, y: -5 },
 ].map((p) => ({ ...p, id: uid() }))
 
-const clamp = (v: number, lo: number, hi: number) =>
-  Math.max(lo, Math.min(hi, v))
-
 function pointClass(
   p: Point,
   s: SweepState | null,
@@ -108,7 +105,7 @@ export default function App() {
       setAddError('Enter a number for both x and y.')
       return
     }
-    const added = addPoint(clamp(x, ...X_DOMAIN), clamp(y, ...Y_DOMAIN))
+    const added = addPoint(x, y)
     if (!added) {
       setAddError('A point already exists at those coordinates.')
       return
@@ -174,10 +171,10 @@ export default function App() {
                   // the y-range [cy - best, cy + best]. Only when best is finite.
                   let searchBox: ReactNode = null
                   if (current && Number.isFinite(best)) {
-                    const x1 = xScale(clamp(current.x - best, ...X_DOMAIN))
-                    const x2 = xScale(clamp(current.x, ...X_DOMAIN))
-                    const yTop = yScale(clamp(current.y + best, ...Y_DOMAIN))
-                    const yBot = yScale(clamp(current.y - best, ...Y_DOMAIN))
+                    const x1 = xScale(current.x - best)
+                    const x2 = xScale(current.x)
+                    const yTop = yScale(current.y + best)
+                    const yBot = yScale(current.y - best)
                     searchBox = (
                       <rect
                         className="search-box"
@@ -311,8 +308,9 @@ export default function App() {
             </div>
 
             <p className="hint">
-              Click a point on the grid to remove it. Adding or removing points
-              restarts the sweep.
+              Scroll to zoom · drag to pan · double-click to reset the view.
+              Click a point to remove it. Adding or removing points restarts the
+              sweep.
             </p>
 
             <dl className="status">

@@ -1,3 +1,5 @@
 # Plane Sweep Visualizer
 
-In-browser algo visulalisation
+Live: https://closest-pair-visualization-production.up.railway.app/
+
+In-browser plane sweep visualization

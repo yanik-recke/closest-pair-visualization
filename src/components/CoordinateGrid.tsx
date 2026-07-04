@@ -1,5 +1,7 @@
 import { scaleLinear, type ScaleLinear } from 'd3-scale'
-import { type ReactNode } from 'react'
+import { select } from 'd3-selection'
+import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 
 /** Screen-space padding (px) reserved for axis tick labels. */
 const MARGIN = { top: 16, right: 16, bottom: 28, left: 36 }
@@ -19,7 +21,7 @@ interface CoordinateGridProps {
   /** total svg size in pixels */
   width: number
   height: number
-  /** visible data range on each axis */
+  /** initial visible data range on each axis (pan/zoom changes it from here) */
   xDomain?: [number, number]
   yDomain?: [number, number]
   /** draw your segments / sweep line / points here, in data coordinates */
@@ -36,78 +38,130 @@ export function CoordinateGrid({
   const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right)
   const innerHeight = Math.max(0, height - MARGIN.top - MARGIN.bottom)
 
-  // The "projection": data units -> pixels within the plotting area.
-  // Keep the aspect ratio 1:1 so distances read truthfully: use a single
-  // pixels-per-unit for both axes, then expand the domains to fill the panel
-  // (centered on the requested domains). The requested range stays fully
-  // visible; the longer pixel axis just shows a bit more.
+  const gRef = useRef<SVGGElement>(null)
+  const zoomRef = useRef<ZoomBehavior<SVGGElement, unknown> | null>(null)
+  const [transform, setTransform] = useState(zoomIdentity)
+  const clipId = useId()
+
+  // Base "projection": data units -> pixels, with a single pixels-per-unit for
+  // both axes so squares stay square. y is inverted (SVG y grows downward).
   const xCenter = (xDomain[0] + xDomain[1]) / 2
   const yCenter = (yDomain[0] + yDomain[1]) / 2
   const xSpan = xDomain[1] - xDomain[0]
   const ySpan = yDomain[1] - yDomain[0]
-  const pxPerUnit = Math.min(innerWidth / xSpan, innerHeight / ySpan)
+  const pxPerUnit = Math.min(innerWidth / xSpan, innerHeight / ySpan) || 1
   const xHalf = innerWidth / pxPerUnit / 2
   const yHalf = innerHeight / pxPerUnit / 2
-
-  // y is inverted because SVG's y grows downward but math grows upward.
-  const xScale = scaleLinear()
+  const x0 = scaleLinear()
     .domain([xCenter - xHalf, xCenter + xHalf])
     .range([0, innerWidth])
-  const yScale = scaleLinear()
+  const y0 = scaleLinear()
     .domain([yCenter - yHalf, yCenter + yHalf])
     .range([innerHeight, 0])
 
+  // Apply the live zoom/pan transform. This shifts the *domain* (geometry
+  // re-projects) while keeping fixed pixel sizes for points, strokes, labels.
+  const xScale = transform.rescaleX(x0)
+  const yScale = transform.rescaleY(y0)
+
+  // Attach the d3-zoom behavior once; drag pans, wheel zooms, double-click resets.
+  useEffect(() => {
+    if (!gRef.current) return
+    const g = select(gRef.current)
+    const zb = zoom<SVGGElement, unknown>()
+      .scaleExtent([0.15, 40])
+      .on('zoom', (e) => setTransform(e.transform))
+    zoomRef.current = zb
+    g.call(zb).on('dblclick.zoom', null)
+    const resetView = () => zb.transform(g, zoomIdentity)
+    g.on('dblclick', resetView)
+    return () => {
+      g.on('.zoom', null)
+      g.on('dblclick', null)
+    }
+  }, [])
+
+  // Keep the zoom extent in sync with the panel size.
+  useEffect(() => {
+    zoomRef.current?.extent([
+      [0, 0],
+      [innerWidth, innerHeight],
+    ])
+  }, [innerWidth, innerHeight])
+
   const xTicks = xScale.ticks(10)
   const yTicks = yScale.ticks(10)
+  const [xMin, xMax] = xScale.domain()
+  const [yMin, yMax] = yScale.domain()
 
   const scales: GridScales = { xScale, yScale, innerWidth, innerHeight }
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
-      <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
-        {/* --- grid lines --- */}
-        {xTicks.map((t) => (
-          <line
-            key={`gx-${t}`}
-            className={t === 0 ? 'grid-line--major' : 'grid-line--minor'}
-            x1={xScale(t)}
-            x2={xScale(t)}
-            y1={0}
-            y2={innerHeight}
-          />
-        ))}
-        {yTicks.map((t) => (
-          <line
-            key={`gy-${t}`}
-            className={t === 0 ? 'grid-line--major' : 'grid-line--minor'}
-            x1={0}
-            x2={innerWidth}
-            y1={yScale(t)}
-            y2={yScale(t)}
-          />
-        ))}
+      <defs>
+        <clipPath id={clipId}>
+          <rect x={0} y={0} width={innerWidth} height={innerHeight} />
+        </clipPath>
+      </defs>
 
-        {/* --- axes through the origin (only if 0 is in view) --- */}
-        {yDomain[0] <= 0 && yDomain[1] >= 0 && (
-          <line
-            className="axis-line"
-            x1={0}
-            x2={innerWidth}
-            y1={yScale(0)}
-            y2={yScale(0)}
-          />
-        )}
-        {xDomain[0] <= 0 && xDomain[1] >= 0 && (
-          <line
-            className="axis-line"
-            x1={xScale(0)}
-            x2={xScale(0)}
-            y1={0}
-            y2={innerHeight}
-          />
-        )}
+      <g ref={gRef} transform={`translate(${MARGIN.left},${MARGIN.top})`}>
+        {/* transparent surface so pan/zoom works over empty space too */}
+        <rect
+          x={0}
+          y={0}
+          width={innerWidth}
+          height={innerHeight}
+          fill="transparent"
+          style={{ cursor: 'grab' }}
+        />
 
-        {/* --- tick labels --- */}
+        {/* clipped plotting area: grid, axes, and caller geometry */}
+        <g clipPath={`url(#${clipId})`}>
+          {xTicks.map((t) => (
+            <line
+              key={`gx-${t}`}
+              className={t === 0 ? 'grid-line--major' : 'grid-line--minor'}
+              x1={xScale(t)}
+              x2={xScale(t)}
+              y1={0}
+              y2={innerHeight}
+            />
+          ))}
+          {yTicks.map((t) => (
+            <line
+              key={`gy-${t}`}
+              className={t === 0 ? 'grid-line--major' : 'grid-line--minor'}
+              x1={0}
+              x2={innerWidth}
+              y1={yScale(t)}
+              y2={yScale(t)}
+            />
+          ))}
+
+          {/* axes through the origin (only if 0 is in view) */}
+          {yMin <= 0 && yMax >= 0 && (
+            <line
+              className="axis-line"
+              x1={0}
+              x2={innerWidth}
+              y1={yScale(0)}
+              y2={yScale(0)}
+            />
+          )}
+          {xMin <= 0 && xMax >= 0 && (
+            <line
+              className="axis-line"
+              x1={xScale(0)}
+              x2={xScale(0)}
+              y1={0}
+              y2={innerHeight}
+            />
+          )}
+
+          {children?.(scales)}
+        </g>
+
+        {/* tick labels live in the margin, so they are not clipped */}
         {xTicks.map((t) => (
           <text
             key={`lx-${t}`}
@@ -131,17 +185,6 @@ export function CoordinateGrid({
             {t}
           </text>
         ))}
-
-        {/* --- axis names --- */}
-        <text className="axis-name" x={innerWidth} y={yScale(0) - 6} textAnchor="end">
-          x
-        </text>
-        <text className="axis-name" x={xScale(0) + 8} y={2} dominantBaseline="hanging">
-          y
-        </text>
-
-        {/* --- geometry layers drawn by the parent --- */}
-        {children?.(scales)}
       </g>
     </svg>
   )
