@@ -318,6 +318,40 @@ export default function App() {
         </div>
 
         <aside className="controls-panel">
+          <div className="controls-buttons">
+            <div className="controls-row">
+              <button onClick={stepBack} disabled={cursor < 0}>
+                ◂ Back
+              </button>
+              <button onClick={step} disabled={atEnd}>
+                Step ▸
+              </button>
+            </div>
+            <button onClick={runToEnd} disabled={atEnd}>
+              Run to end ⏭
+            </button>
+            <button onClick={reset} className="secondary">
+              Reset ↺
+            </button>
+          </div>
+
+          <dl className="status">
+            <dt>Points</dt>
+            <dd>{points.length}</dd>
+            <dt>Progress</dt>
+            <dd>{`${cursor + 1} / ${steps.length}`}</dd>
+            <dt>Phase</dt>
+            <dd>{state?.phase ?? "—"}</dd>
+            <dt>Step</dt>
+            <dd>{state?.message ?? "Press Step to begin"}</dd>
+            <dt>Best distance</dt>
+            <dd>
+              {state && Number.isFinite(state.best.dist)
+                ? state.best.dist.toFixed(4)
+                : "∞"}
+            </dd>
+          </dl>
+
           <form className="add-point-form" onSubmit={handleAddSubmit}>
             <div className="add-point-fields">
               <label>
@@ -377,40 +411,6 @@ export default function App() {
               )}
             </div>
           </form>
-
-          <div className="controls-buttons">
-            <div className="controls-row">
-              <button onClick={stepBack} disabled={cursor < 0}>
-                ◂ Back
-              </button>
-              <button onClick={step} disabled={atEnd}>
-                Step ▸
-              </button>
-            </div>
-            <button onClick={runToEnd} disabled={atEnd}>
-              Run to end ⏭
-            </button>
-            <button onClick={reset} className="secondary">
-              Reset ↺
-            </button>
-          </div>
-
-          <dl className="status">
-            <dt>Points</dt>
-            <dd>{points.length}</dd>
-            <dt>Progress</dt>
-            <dd>{`${cursor + 1} / ${steps.length}`}</dd>
-            <dt>Phase</dt>
-            <dd>{state?.phase ?? "—"}</dd>
-            <dt>Step</dt>
-            <dd>{state?.message ?? "Press Step to begin"}</dd>
-            <dt>Best distance</dt>
-            <dd>
-              {state && Number.isFinite(state.best.dist)
-                ? state.best.dist.toFixed(4)
-                : "∞"}
-            </dd>
-          </dl>
         </aside>
       </main>
     </>
