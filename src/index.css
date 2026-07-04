@@ -168,6 +168,31 @@ body {
   color: var(--intersection);
 }
 
+.import-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  margin-top: 0.1rem;
+  border-top: 1px solid var(--panel-border);
+}
+.import-text {
+  width: 100%;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--bg);
+  color: var(--ink);
+  resize: vertical;
+}
+.import-text:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .controls-buttons {
   display: flex;
   flex-direction: column;

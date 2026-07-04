@@ -62,6 +62,10 @@ export default function App() {
   const [inputY, setInputY] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
 
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
+
   // The whole run is computed up front (it's small: O(n log n) snapshots), so
   // the total step count is known and Back/Step just move the cursor.
   const steps = useMemo(() => {
@@ -113,6 +117,45 @@ export default function App() {
     setAddError(null);
     setInputX("");
     setInputY("");
+  };
+
+  // Parse "x,y; x,y; ..." then replace ALL existing points with the result.
+  const handleImport = () => {
+    const tokens = importText
+      .split(";")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+    if (tokens.length === 0) {
+      setImportError('Paste at least one point, e.g. "1,2; 3,4".');
+      return;
+    }
+    const parsed: GridPoint[] = [];
+    const seen = new Set<string>();
+    for (const tok of tokens) {
+      const parts = tok.split(",").map((s) => s.trim());
+      const x = Number(parts[0]);
+      const y = Number(parts[1]);
+      if (
+        parts.length !== 2 ||
+        parts[0] === "" ||
+        parts[1] === "" ||
+        Number.isNaN(x) ||
+        Number.isNaN(y)
+      ) {
+        setImportError(`"${tok}" is not a valid "x,y" pair.`);
+        return;
+      }
+      const key = `${x},${y}`;
+      if (seen.has(key)) continue; // silently drop duplicates
+      seen.add(key);
+      parsed.push({ id: uid(), x, y });
+    }
+    setPoints(parsed); // replaces everything, clearing existing points
+    setHovered(null);
+    setCursor(-1);
+    setImportError(null);
+    setImportText("");
+    setShowImport(false);
   };
 
   const step = () => setCursor((c) => Math.min(steps.length - 1, c + 1));
@@ -303,6 +346,35 @@ export default function App() {
             </div>
             <button type="submit">Add point</button>
             {addError && <p className="add-error">{addError}</p>}
+
+            <div className="import-section">
+              <button
+                type="button"
+                className="import-toggle"
+                onClick={() => setShowImport((v) => !v)}
+                aria-expanded={showImport}
+              >
+                {showImport ? "Cancel import" : "Import points…"}
+              </button>
+              {showImport && (
+                <>
+                  <textarea
+                    className="import-text"
+                    rows={3}
+                    value={importText}
+                    onChange={(e) => {
+                      setImportText(e.target.value);
+                      setImportError(null);
+                    }}
+                    placeholder="1,2; 3,4; -5,6"
+                  />
+                  <button type="button" onClick={handleImport}>
+                    Replace all with these
+                  </button>
+                  {importError && <p className="add-error">{importError}</p>}
+                </>
+              )}
+            </div>
           </form>
 
           <div className="controls-buttons">
