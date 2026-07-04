@@ -5,8 +5,8 @@ import { useElementSize } from "./hooks/useElementSize";
 import { planesweepSteps, type SweepState } from "./geometry/planesweep";
 import type { Point } from "./geometry/types";
 
-const X_DOMAIN: [number, number] = [-10, 10];
-const Y_DOMAIN: [number, number] = [-10, 10];
+const X_DOMAIN: [number, number] = [-2, 18];
+const Y_DOMAIN: [number, number] = [-2, 12];
 
 /** A point with a stable id, so React keys and add/remove stay correct. */
 interface GridPoint extends Point {
@@ -19,16 +19,13 @@ const uid = () =>
     : `p${Math.random().toString(36).slice(2)}`;
 
 const INITIAL_POINTS: GridPoint[] = [
-  { x: -8, y: 3 },
-  { x: -6, y: -4 },
-  { x: -3, y: 5 },
-  { x: -1, y: 0 },
-  { x: 1, y: -6 },
-  { x: 2, y: 4 },
-  { x: 4, y: -2 },
-  { x: 5, y: 6 },
-  { x: 7, y: 1 },
-  { x: 8, y: -5 },
+  { x: 10, y: 0 },
+  { x: 5, y: 7 },
+  { x: 13, y: 3 },
+  { x: 2, y: 3 },
+  { x: 16, y: 6 },
+  { x: 8, y: 4 },
+  { x: 11, y: 6 },
 ].map((p) => ({ ...p, id: uid() }));
 
 function pointClass(
@@ -132,7 +129,11 @@ export default function App() {
     const parsed: GridPoint[] = [];
     const seen = new Set<string>();
     for (const tok of tokens) {
-      const parts = tok.split(",").map((s) => s.trim());
+      // Accept both "x,y" and "(x,y)" by stripping any parentheses.
+      const parts = tok
+        .replace(/[()]/g, "")
+        .split(",")
+        .map((s) => s.trim());
       const x = Number(parts[0]);
       const y = Number(parts[1]);
       if (
@@ -366,7 +367,7 @@ export default function App() {
                       setImportText(e.target.value);
                       setImportError(null);
                     }}
-                    placeholder="1,2; 3,4; -5,6"
+                    placeholder="(1,2); (3,4); -5,6"
                   />
                   <button type="button" onClick={handleImport}>
                     Replace all with these
@@ -393,11 +394,6 @@ export default function App() {
               Reset ↺
             </button>
           </div>
-
-          <p className="hint">
-            Scroll to zoom · Drag to pan · Double-click to reset the view. Click
-            a point to remove it. Adding or removing points restarts the sweep.
-          </p>
 
           <dl className="status">
             <dt>Points</dt>
