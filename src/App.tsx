@@ -1,22 +1,22 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
-import { CoordinateGrid } from './components/CoordinateGrid'
-import { PointTooltip } from './components/PointTooltip'
-import { useElementSize } from './hooks/useElementSize'
-import { planesweepSteps, type SweepState } from './geometry/planesweep'
-import type { Point } from './geometry/types'
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { CoordinateGrid } from "./components/CoordinateGrid";
+import { PointTooltip } from "./components/PointTooltip";
+import { useElementSize } from "./hooks/useElementSize";
+import { planesweepSteps, type SweepState } from "./geometry/planesweep";
+import type { Point } from "./geometry/types";
 
-const X_DOMAIN: [number, number] = [-10, 10]
-const Y_DOMAIN: [number, number] = [-10, 10]
+const X_DOMAIN: [number, number] = [-10, 10];
+const Y_DOMAIN: [number, number] = [-10, 10];
 
 /** A point with a stable id, so React keys and add/remove stay correct. */
 interface GridPoint extends Point {
-  id: string
+  id: string;
 }
 
 const uid = () =>
-  typeof crypto !== 'undefined' && crypto.randomUUID
+  typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
-    : `p${Math.random().toString(36).slice(2)}`
+    : `p${Math.random().toString(36).slice(2)}`;
 
 const INITIAL_POINTS: GridPoint[] = [
   { x: -8, y: 3 },
@@ -29,130 +29,145 @@ const INITIAL_POINTS: GridPoint[] = [
   { x: 5, y: 6 },
   { x: 7, y: 1 },
   { x: 8, y: -5 },
-].map((p) => ({ ...p, id: uid() }))
+].map((p) => ({ ...p, id: uid() }));
 
 function pointClass(
   p: Point,
   s: SweepState | null,
   sets: {
-    active: Set<Point>
-    candidates: Set<Point>
-    compare: Set<Point>
-    best: Set<Point>
+    active: Set<Point>;
+    candidates: Set<Point>;
+    compare: Set<Point>;
+    best: Set<Point>;
   },
 ): string {
-  if (s?.current === p) return 'point point--current'
-  if (sets.compare.has(p)) return 'point point--compare'
-  if (sets.best.has(p)) return 'point point--best'
-  if (sets.candidates.has(p)) return 'point point--candidate'
-  if (sets.active.has(p)) return 'point point--active'
-  return 'point'
+  if (s?.current === p) return "point point--current";
+  if (sets.compare.has(p)) return "point point--compare";
+  if (sets.best.has(p)) return "point point--best";
+  if (sets.candidates.has(p)) return "point point--candidate";
+  if (sets.active.has(p)) return "point point--active";
+  return "point";
 }
 
 export default function App() {
-  const { ref, width, height } = useElementSize<HTMLDivElement>()
+  const { ref, width, height } = useElementSize<HTMLDivElement>();
 
-  const [points, setPoints] = useState<GridPoint[]>(INITIAL_POINTS)
+  const [points, setPoints] = useState<GridPoint[]>(INITIAL_POINTS);
   // `cursor` points at the shown snapshot (-1 = before the first step).
-  const [cursor, setCursor] = useState(-1)
+  const [cursor, setCursor] = useState(-1);
 
-  const [hovered, setHovered] = useState<Point | null>(null)
+  const [hovered, setHovered] = useState<Point | null>(null);
 
-  const [inputX, setInputX] = useState('')
-  const [inputY, setInputY] = useState('')
-  const [addError, setAddError] = useState<string | null>(null)
+  const [inputX, setInputX] = useState("");
+  const [inputY, setInputY] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
 
   // The whole run is computed up front (it's small: O(n log n) snapshots), so
   // the total step count is known and Back/Step just move the cursor.
   const steps = useMemo(() => {
-    const out: SweepState[] = []
-    const gen = planesweepSteps(points)
-    let res = gen.next()
+    const out: SweepState[] = [];
+    const gen = planesweepSteps(points);
+    let res = gen.next();
     while (!res.done) {
-      out.push(res.value)
-      res = gen.next()
+      out.push(res.value);
+      res = gen.next();
     }
-    return out
-  }, [points])
+    return out;
+  }, [points]);
 
-  const state = cursor >= 0 ? steps[cursor] : null
-  const atEnd = cursor >= steps.length - 1
+  const state = cursor >= 0 ? steps[cursor] : null;
+  const atEnd = cursor >= steps.length - 1;
 
   /** Adds a point unless one already exists there. Returns whether it added. */
   const addPoint = (x: number, y: number): boolean => {
-    if (points.some((p) => p.x === x && p.y === y)) return false
-    setPoints((ps) => [...ps, { id: uid(), x, y }])
-    setCursor(-1) // editing restarts the sweep
-    return true
-  }
+    if (points.some((p) => p.x === x && p.y === y)) return false;
+    setPoints((ps) => [...ps, { id: uid(), x, y }]);
+    setCursor(-1); // editing restarts the sweep
+    return true;
+  };
 
   const removePoint = (id: string) => {
-    setPoints((ps) => ps.filter((p) => p.id !== id))
-    setHovered(null) // the removed circle can't fire mouseleave; clear tooltip
-    setCursor(-1)
-  }
+    setPoints((ps) => ps.filter((p) => p.id !== id));
+    setHovered(null); // the removed circle can't fire mouseleave; clear tooltip
+    setCursor(-1);
+  };
 
   const handleAddSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    const x = Number(inputX)
-    const y = Number(inputY)
+    e.preventDefault();
+    const x = Number(inputX);
+    const y = Number(inputY);
     if (
-      inputX.trim() === '' ||
-      inputY.trim() === '' ||
+      inputX.trim() === "" ||
+      inputY.trim() === "" ||
       Number.isNaN(x) ||
       Number.isNaN(y)
     ) {
-      setAddError('Enter a number for both x and y.')
-      return
+      setAddError("Enter a number for both x and y.");
+      return;
     }
-    const added = addPoint(x, y)
+    const added = addPoint(x, y);
     if (!added) {
-      setAddError('A point already exists at those coordinates.')
-      return
+      setAddError("A point already exists at those coordinates.");
+      return;
     }
-    setAddError(null)
-    setInputX('')
-    setInputY('')
-  }
+    setAddError(null);
+    setInputX("");
+    setInputY("");
+  };
 
-  const step = () => setCursor((c) => Math.min(steps.length - 1, c + 1))
-  const stepBack = () => setCursor((c) => Math.max(-1, c - 1))
-  const runToEnd = () => setCursor(steps.length - 1)
-  const reset = () => setCursor(-1)
+  const step = () => setCursor((c) => Math.min(steps.length - 1, c + 1));
+  const stepBack = () => setCursor((c) => Math.max(-1, c - 1));
+  const runToEnd = () => setCursor(steps.length - 1);
+  const reset = () => setCursor(-1);
 
   const sets = {
     active: new Set(state?.active ?? []),
     candidates: new Set(state?.candidates ?? []),
     compare: new Set(state?.compare ?? []),
     best: new Set(state?.best.pair ?? []),
-  }
+  };
 
-  const bestPair = state?.best.pair ?? null
+  const bestPair = state?.best.pair ?? null;
 
   return (
     <>
       <header className="app-header">
         <h1>Plane Sweep Visualizer</h1>
-        <span className="subtitle">closest pair of points · sweep line</span>
+        <span className="subtitle">Closest Pair of Points Problem</span>
+        <a
+          className="github-link"
+          href="https://github.com/yanik-recke/closest-pair-visualization"
+          target="_blank"
+          rel="noreferrer noopener"
+          aria-label="View source on GitHub"
+          title="View source on GitHub"
+        >
+          <svg width="22" height="22" viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+            />
+          </svg>
+        </a>
       </header>
 
       <main className="app-main">
         <div className="grid-column">
           <ul className="legend">
             <li>
-              <span className="swatch point--current" /> current point
+              <span className="swatch point--current" /> Current point
             </li>
             <li>
-              <span className="swatch point--active" /> active set
+              <span className="swatch point--active" /> Active set
             </li>
             <li>
-              <span className="swatch point--candidate" /> in y-range
+              <span className="swatch point--candidate" /> In y-range
             </li>
             <li>
-              <span className="swatch point--compare" /> comparing
+              <span className="swatch point--compare" /> Comparing
             </li>
             <li>
-              <span className="swatch point--best" /> best pair
+              <span className="swatch point--best" /> Best pair
             </li>
           </ul>
           <div className="canvas-panel" ref={ref}>
@@ -164,17 +179,17 @@ export default function App() {
                 yDomain={Y_DOMAIN}
               >
                 {({ xScale, yScale, innerHeight }) => {
-                  const current = state?.current ?? null
-                  const best = state?.best.dist ?? Infinity
+                  const current = state?.current ?? null;
+                  const best = state?.best.dist ?? Infinity;
 
                   // Candidate region: x-range [cx - best, cx] intersected with
                   // the y-range [cy - best, cy + best]. Only when best is finite.
-                  let searchBox: ReactNode = null
+                  let searchBox: ReactNode = null;
                   if (current && Number.isFinite(best)) {
-                    const x1 = xScale(current.x - best)
-                    const x2 = xScale(current.x)
-                    const yTop = yScale(current.y + best)
-                    const yBot = yScale(current.y - best)
+                    const x1 = xScale(current.x - best);
+                    const x2 = xScale(current.x);
+                    const yTop = yScale(current.y + best);
+                    const yBot = yScale(current.y - best);
                     searchBox = (
                       <rect
                         className="search-box"
@@ -184,7 +199,7 @@ export default function App() {
                         width={Math.abs(x2 - x1)}
                         height={Math.abs(yBot - yTop)}
                       />
-                    )
+                    );
                   }
 
                   return (
@@ -237,8 +252,8 @@ export default function App() {
                             setHovered((cur) => (cur === p ? null : cur))
                           }
                           onClick={(e) => {
-                            e.stopPropagation()
-                            removePoint(p.id)
+                            e.stopPropagation();
+                            removePoint(p.id);
                           }}
                         />
                       ))}
@@ -251,86 +266,85 @@ export default function App() {
                         />
                       )}
                     </g>
-                  )
+                  );
                 }}
               </CoordinateGrid>
             )}
           </div>
         </div>
 
-          <aside className="controls-panel">
-            <form className="add-point-form" onSubmit={handleAddSubmit}>
-              <div className="add-point-fields">
-                <label>
-                  x
-                  <input
-                    type="number"
-                    step="any"
-                    value={inputX}
-                    onChange={(e) => {
-                      setInputX(e.target.value)
-                      setAddError(null)
-                    }}
-                  />
-                </label>
-                <label>
-                  y
-                  <input
-                    type="number"
-                    step="any"
-                    value={inputY}
-                    onChange={(e) => {
-                      setInputY(e.target.value)
-                      setAddError(null)
-                    }}
-                  />
-                </label>
-              </div>
-              <button type="submit">Add point</button>
-              {addError && <p className="add-error">{addError}</p>}
-            </form>
+        <aside className="controls-panel">
+          <form className="add-point-form" onSubmit={handleAddSubmit}>
+            <div className="add-point-fields">
+              <label>
+                x
+                <input
+                  type="number"
+                  step="any"
+                  value={inputX}
+                  onChange={(e) => {
+                    setInputX(e.target.value);
+                    setAddError(null);
+                  }}
+                />
+              </label>
+              <label>
+                y
+                <input
+                  type="number"
+                  step="any"
+                  value={inputY}
+                  onChange={(e) => {
+                    setInputY(e.target.value);
+                    setAddError(null);
+                  }}
+                />
+              </label>
+            </div>
+            <button type="submit">Add point</button>
+            {addError && <p className="add-error">{addError}</p>}
+          </form>
 
-            <div className="controls-buttons">
-              <div className="controls-row">
-                <button onClick={stepBack} disabled={cursor < 0}>
-                  ◂ Back
-                </button>
-                <button onClick={step} disabled={atEnd}>
-                  Step ▸
-                </button>
-              </div>
-              <button onClick={runToEnd} disabled={atEnd}>
-                Run to end ⏭
+          <div className="controls-buttons">
+            <div className="controls-row">
+              <button onClick={stepBack} disabled={cursor < 0}>
+                ◂ Back
               </button>
-              <button onClick={reset} className="secondary">
-                Reset ↺
+              <button onClick={step} disabled={atEnd}>
+                Step ▸
               </button>
             </div>
+            <button onClick={runToEnd} disabled={atEnd}>
+              Run to end ⏭
+            </button>
+            <button onClick={reset} className="secondary">
+              Reset ↺
+            </button>
+          </div>
 
-            <p className="hint">
-              Scroll to zoom · drag to pan · double-click to reset the view.
-              Click a point to remove it. Adding or removing points restarts the
-              sweep.
-            </p>
+          <p className="hint">
+            Scroll to zoom · Drag to pan · Double-click to reset the view. Click
+            a point to remove it. Adding or removing points restarts the sweep.
+          </p>
 
-            <dl className="status">
-              <dt>Points</dt>
-              <dd>{points.length}</dd>
-              <dt>Progress</dt>
-              <dd>{`${cursor + 1} / ${steps.length}`}</dd>
-              <dt>Phase</dt>
-              <dd>{state?.phase ?? '—'}</dd>
-              <dt>Step</dt>
-              <dd>{state?.message ?? 'Press Step to begin'}</dd>
-              <dt>Best distance</dt>
-              <dd>
-                {state && Number.isFinite(state.best.dist)
-                  ? state.best.dist.toFixed(4)
-                  : '∞'}
-              </dd>
-            </dl>
-          </aside>
-        </main>
+          <dl className="status">
+            <dt>Points</dt>
+            <dd>{points.length}</dd>
+            <dt>Progress</dt>
+            <dd>{`${cursor + 1} / ${steps.length}`}</dd>
+            <dt>Phase</dt>
+            <dd>{state?.phase ?? "—"}</dd>
+            <dt>Step</dt>
+            <dd>{state?.message ?? "Press Step to begin"}</dd>
+            <dt>Best distance</dt>
+            <dd>
+              {state && Number.isFinite(state.best.dist)
+                ? state.best.dist.toFixed(4)
+                : "∞"}
+            </dd>
+          </dl>
+        </aside>
+      </main>
     </>
-  )
+  );
 }

@@ -8,8 +8,9 @@
   --axis: #0d1117;        /* real dark axes */
   --ink: #0d1117;
   --ink-dim: #64717f;
-  --accent: #2b7fff;      /* sweep line */
+  --accent: #2b7fff;      /* sweep line / candidates */
   --segment: #0d1117;     /* real dark points */
+  --active: #14b8a6;      /* active-set points (teal) */
   --intersection: #e5484d;
 
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -55,6 +56,17 @@ body {
 .app-header .subtitle {
   font-size: 0.8rem;
   color: var(--ink-dim);
+}
+
+.github-link {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  color: var(--ink);
+  transition: opacity 0.12s ease;
+}
+.github-link:hover {
+  opacity: 0.7;
 }
 
 .app-main {
@@ -262,7 +274,7 @@ body {
     0 0 0 1px var(--panel-border);
 }
 .legend .point--active {
-  background: var(--segment);
+  background: var(--active);
 }
 .legend .point--candidate {
   background: var(--accent);
@@ -325,7 +337,7 @@ body {
   fill: var(--accent);
 }
 .point--active {
-  fill: var(--segment);
+  fill: var(--active);
 }
 .point--candidate {
   fill: var(--accent);
