@@ -21,5 +21,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Dev-only scripts run directly by Node (TS type-stripping), not bundled.
+  "exclude": ["src/planesweep.ts", "src/**/*.fuzz.ts"]
 }

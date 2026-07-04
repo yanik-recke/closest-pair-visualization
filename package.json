@@ -10,6 +10,7 @@
     "start": "vite preview --host 0.0.0.0 --port ${PORT:-4173}"
   },
   "dependencies": {
+    "avl": "^2.0.0",
     "d3-scale": "^4.0.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
